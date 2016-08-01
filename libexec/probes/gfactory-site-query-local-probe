@@ -1,0 +1,188 @@
+#!/usr/bin/python
+
+import os
+import re
+import subprocess
+import sys
+import urllib2
+import rsvprobe
+import htcondor
+import classad
+import re
+import ConfigParser
+
+# The maximin number of metrics allowed
+max_metrics = 10
+
+sys.path.insert(0, '.')
+
+
+class GfactorySiteQueryingLocalProbe(rsvprobe.RSVProbe):
+    """
+    This master probe querys condor collector at a gfactory and parses it to obtain the urls
+    of several CE nodes that accept jobs from the wanted VO
+    """
+
+    def __init__(self):
+        rsvprobe.RSVProbe.__init__(self)
+        self.metric = ""
+        self.short_metric = ""
+        metric = rsvprobe.RSVMetric("Gfactory-site-querying",
+                 "org.osg.local-gfactory-site-querying-local", rsvprobe.RSVMetric.STATUS)
+        self.supported_metrics = [metric]
+        self.details = "---\n"
+        self.gfactory = "glidein-itb.grid.iu.edu"
+        self.constraint = """stringListMember("IceCube",GLIDEIN_Supported_VOs)"""
+        self.dummyMetric = "org.osg.general.dummy-vanilla-probe"
+        self.itb = False
+        self.dummyMetrics = []
+        # For adding up to max_metrics different metrics
+        for metrics_num in range(0, max_metrics):
+            metric_opt = "dmetric%d=" % metrics_num
+            self.addopt("", metric_opt, "--mesh # url of the metric name (ex. --dmetric0 org.osg.general.osg-version)") 
+        self.addopt("", "gfactory=", "--gfactory the host name of the gfactory i.e glidein-itb.grid.iu.edu")
+        self.addopt("", "dmetric=", "--dmetric the metric to be executed at the hosts from the gfactory i,e org.osg.general.osg-version")
+        self.addopt("", "constraint=", """--constraint the constraint to query the gfactory collector i.e stringListMember("CMS",GLIDEIN_Supported_VOs)""")
+        self.addopt("", "itb=", """--itb If true include the +is_itb=True Ad on the probes""")
+         
+
+    def parseopt(self):
+        """parse options specific to the gfactory probe
+        """
+        options, optlist, remainder = rsvprobe.RSVProbe.parseopt(self)
+        for opt, arg in options:
+            # Adding the extra meshes
+            if 'gfactory' in opt:
+                self.gfactory = arg
+            elif 'dmetric' in opt:
+                if arg not in self.dummyMetrics:
+                    self.dummyMetrics.append(arg)
+            elif 'constraint' in opt:
+                self.constraint = arg
+            elif 'itb' in opt:
+                if arg in ['true', '1', 't', 'y', 'yes', 'yeah', 'yup', 'certainly', 'uh-huh', 'True']:
+                    self.itb = True
+                else:
+                    self.itb = False
+            if self.host == self.localhost:
+                self.is_local = True
+            else:
+                self.is_local = False
+        return options, optlist, remainder
+
+    # Enables a dummy probe for each node in nodes
+    def enableDummyProbe(self, nodes, metric):
+        for node in nodes:
+            cmd = "rsv-control --enable --host %s %s" % (node, metric)
+            ec, out = rsvprobe.run_command(cmd)
+            # make a warning if the dummy metric failed
+            result = out.split("\n")
+            if 'ERROR' in result:
+                self.add_warning("Failed to enable probe failed for node: %s" % (node), exit_code=0)
+            cmd = "rsv-control --on --host %s %s" % (node, metric)
+            ec, out = rsvprobe.run_command(cmd)
+            result = out.split("\n")
+            if 'ERROR' in result:
+                self.add_warning("Failed to turn on probe failed for node: %s, metric %s" % (node, metric), exit_code=0)
+    
+    # Disable the dummy probe for a list of nodes
+    def disableDummyProbe(self, nodes, metric):
+        for node in nodes:
+            cmd = "rsv-control --disable --host %s %s" % (node, metric)
+            ec, out = rsvprobe.run_command(cmd)
+            # make a warning if the dummy metric failed                                                                                                       
+            result = out.split("\n")
+            if 'ERROR' in result:
+                self.add_warning("Failed to enable probe failed for node: %s" % (node), exit_code=0)
+            cmd = "rsv-control --off --host %s %s" % (node, metric)
+            ec, out = rsvprobe.run_command(cmd)
+            result = out.split("\n")
+            if 'ERROR' in result:
+                self.add_warning("Failed to turn off probe failed for node: %s" % (node), exit_code=0)
+        
+
+    #Returns a list of nodes that are currently enabled for a given metric
+    def getListEnablednodes(self, metric):
+        cmd = "rsv-control --list --wide %s | grep host | awk '{print $5}'" % (metric)
+        ec, out = rsvprobe.run_command(cmd)
+        result = out.split("\n")
+        if 'not' in result:
+            result.remove('not')
+        return result
+
+    def getListNodesToDisable(self, actualNodes, enabledNodes):
+        nodesToDisable = []
+        for node in enabledNodes:
+            if node not in actualNodes and len(node)>0:
+                nodesToDisable.append(node)
+        return nodesToDisable
+    
+    def getListNodesToEnable(self, actualNodes, enabledNodes):
+        nodesToEnable = []
+        for node in actualNodes:
+                if node not in enabledNodes:
+                    nodesToEnable.append(node)
+        return nodesToEnable
+
+    def getListNodesFactory(self, newconstraint):
+        # A dictionary with all the gatekeepers
+        sites = {}
+        # querying the gfactory
+        coll = htcondor.Collector(self.gfactory)
+        constraint = 'MyType=?="glidefactory" && ' + newconstraint
+        self.add_message("constraint for factory querying: %s" % constraint)
+        self.add_message("Gfactory queried: %s" % self.gfactory)
+        results = coll.query(htcondor.AdTypes.Any, constraint, ['GLIDEIN_Site', 'GLIDEIN_ResourceName', 'GLIDEIN_Gatekeeper', 'GLIDEIN_GridType'])
+        # Parsing the results into a dictionary with the CE's info
+        condorceprog = re.compile("(.*) (.*)")
+        creamceprog = re.compile("(.*):([0-9]*)/(.*)")
+        for result in results:
+            siteName = result["GLIDEIN_Site"]
+            sites[siteName] = siteName
+        return sites
+
+    def updateProbeConfigurations(self, metric):
+        for host in self.sites:
+            dirpath = '/etc/rsv/metrics/' + host
+            configFile = dirpath + '/' + metric + '.conf'
+            self.add_message("Updating configuration for host %s" % (host))
+            # Check that the conf directort for each host exists
+            if not os.path.isdir(dirpath):
+                os.mkdir(dirpath)
+            cfgfile = open(configFile, 'w')
+            Config = ConfigParser.ConfigParser()
+            classAdSection = metric + ' classAds'
+            Config.add_section(classAdSection)
+            Config.set(classAdSection, 'DESIRED_Sites', '"' + host + '"')
+            if self.itb:
+                Config.set(classAdSection, 'is_itb', True)
+            Config.write(cfgfile)
+            cfgfile.close()
+            
+    def run(self):
+        """Main routine for the probe"""
+        self.parseopt()
+        actualNodes = []
+        self.sites = self.getListNodesFactory(self.constraint)
+        actualNodes = self.sites.keys()
+        #Enabled nodes is the list of currently enabled nodes
+        for metric in self.dummyMetrics:
+            self.add_message("Proccesing metric: %s" % metric)
+            self.add_message("Getting list of enabled nodes")
+            enabledNodes = self.getListEnablednodes(metric)
+            self.add_message("Calculating list of enabled and disabled nodes")
+            nodesToEnable = self.getListNodesToEnable(actualNodes, enabledNodes)
+            nodesToDisable = self.getListNodesToDisable(actualNodes, enabledNodes)
+            self .add_message("Enabling nodes %s " % nodesToEnable)
+            self.enableDummyProbe(nodesToEnable, metric)
+            self.add_message("Disabling nodes %s " % nodesToDisable)
+            self.disableDummyProbe(nodesToDisable, metric)
+            self.updateProbeConfigurations(metric)
+        self.return_ok("Everything OK")
+
+def main():
+    probe = GfactorySiteQueryingLocalProbe()
+    return probe.run()
+
+if __name__ == '__main__':
+    sys.exit(main())

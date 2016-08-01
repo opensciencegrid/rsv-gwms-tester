@@ -1,0 +1,10 @@
+[org.osg.local-gfactory-site-querying-local]
+default-cron-interval = */20 * * * *
+execute = local
+service-type = Local-Gfactory
+output-format = brief
+enable-by-default = true
+description = Activates some probes based on the gfactory info.
+need-proxy = false
+
+[org.osg.local-gfactory-site-querying-local env]

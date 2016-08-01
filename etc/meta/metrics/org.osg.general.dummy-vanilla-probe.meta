@@ -1,0 +1,10 @@
+[org.osg.general.dummy-vanilla-probe]
+default-cron-interval = 0 * * * *
+need-proxy = false
+execute = vanilla
+transfer-files = /usr/libexec/rsv/probes/rsvprobe.py
+service-type = OSG-CE
+output-format = brief
+enable-by-default = true
+description = Report the version of the remote CE.
+[org.osg.general.dummy-vanilla-probe env]

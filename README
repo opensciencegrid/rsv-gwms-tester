@@ -1,44 +1,38 @@
 # rsv-gwms-tester
-Additional probes and configuration. One probe that activates several vanilla probes per sites.
 
-Requirements:
+Use Case
+========
+Rsv-gwms-tester is a package that is meant to do end-to-end regular testing of [GlideinWMS](https://glideinwms.fnal.gov/).
+More specifically it is mean to submit a set of HTCondor Vanilla universe jobs to the set of supported grid sites of a Virtual Organization (VO).
+It can be thought of [HammerCloud-light](https://twiki.cern.ch/twiki/bin/view/Main/HammerCloud). The tests are payload jobs that run inside
+the pilot infrastructure
 
-1. Valid Host cert
+Requirements
+============
+1. The Virtual Organization has already a working [Glideinwms Frontend](https://glideinwms.fnal.gov/doc.prd/frontend/index.html)
+1. The Virtual Organization creates a set of probes(jobs or capabilities it wants to test out of a site).
+1. A EL[6|7] machine that can install rsv as root.
+1. An Open port to the WAN
+1. A Public IP
 
+Architecture
+============
+The architechture of `rsv-gwms-tester` is based on the architechture of RSV. It is meant as a set of probes (jobs)
+that are periodically run using HTCondor-cron.
+Traditionally RSV installations would submit grid tests(HTCondor-C) from a host to the same host HTCondor-CE.
+`rsv-gwms-tester` submits a set of Vanilla Jobs that are meant to run at different locations in the Grid.
 
-In order to install:
+The basic idea is that a user (A VO Manager) just needs to edit one "master" probe's configuration (org.osg.local-gfactory-querying-local) 
+and select the VO it wants to test.
+Then the master probes will enable the actual "test probes" at each site the VO is allowed to run in.
+It does by querying a factory HTCondor collector and filtering the sites based on if they suppport a given organization,
+or the sites match a specific constraint (i.e Give me the name of sites that suport LIGO and VIRGO).
+From then on the submit host where `rsv-gwms-tester` runs is just like any other submit host in a HTCondor pool.
 
-1. Install OSG Repos as:
+Behind the scenes the master probes enables the same test jobs for each site it finds on the list obtained above.
+Each job is a probe and while the default configuration ships a "dummy-vanilla-probe" this is meant as a template 
+for each organization to write downs as many probes for what they want to test a site (i.e software installation, access to storage or network setup).
 
-https://twiki.grid.iu.edu/bin/view/Documentation/Release3/YumRepositories
-
-2. yum install rsv-gwms-tester
-
-
-Configuration:
-
-1. Create file /etc/condor-cron/config.d/98_location.config with contents:
-
-CONDOR_HOST = your_glidein_pool_central_manager
-# Don't try the IP address macro of condor-cron it defaults to the private IP
-NETWORK_INTERFACE = this_host_ip
-
-2.  Create file /etc/condor-cron/config.d/90_gwms_dns.config
-
-# Comment: central manager your_central_manager_hostname
-# The following DN will map to condor                                                                                                                                            
-GSI_DAEMON_NAME=$(GSI_DAEMON_NAME),your_central_manager_DN
-
-3. Create file /etc/condor-cron/certs/condor_mapfile
-
-Add central manager DN to the list:
-
-like: 
-GSI "^\/DC\=org\/DC\=opensciencegrid\/O\=Open\ Science\ Grid\/OU\=Services\/CN\=osg\-ligo\-1\.t2\.ucsd\.edu$" condor
-
-
-To start:
-
-rsv-control --enable org.osg.local-gfactory-site-querying-local --host host_name
-
-rsv-control --on org.osg.local-gfactory-site-querying-local --host host_name
+Installation
+============
+For installation instructions please go [here|https://opensciencegrid.org/docs/monitoring/install-rsv-gwms-tester/].

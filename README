@@ -33,22 +33,3 @@ Each job is a probe and while the default configuration ships a "dummy-vanilla-p
 Installation
 ============
 For installation instructions please go [here|https://opensciencegrid.org/docs/monitoring/install-rsv-gwms-tester/].
-
-
-
-Architecure
-===========
-rsv-gwms-tester is identical to the one of [rvs-vo-gwms](https://github.com/opensciencegrid/rsv-vo-gwms).
-Except it submits Condor-C jobs instead of Condor Vanilla jobs. In this regard it acts as a [GlideinWMS Factory](https://glideinwms.fnal.gov/doc.prd/factory/index.html). This way it does not need a GlideinWMS Frontend to work as rsv-vo-gwms does.
-
-Requirements
-============
-
-1. An X509 certificate with the VOMS extension of the Virtual Organization (VO).
-1. A RedHat running machine where rsv-gwms-tester can be installed as root
-
-Installation
-============
-
-For installation instructions please go [here|https://opensciencegrid.org/docs/monitoring/install-rsv-gwms-tester/].
-

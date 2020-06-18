@@ -5,7 +5,7 @@ Use Case
 Rsv-gwms-tester is a package that is meant to do end-to-end regular testing of [GlideinWMS](https://glideinwms.fnal.gov/).
 More specifically it is mean to submit a set of HTCondor Vanilla universe jobs to the set of supported grid sites of a Virtual Organization (VO).
 It can be thought of [HammerCloud-light](https://twiki.cern.ch/twiki/bin/view/Main/HammerCloud). The tests are payload jobs that run inside
-the pilto infrastructure
+the pilot infrastructure
 
 Requirements
 ============

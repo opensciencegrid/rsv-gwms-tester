@@ -28,7 +28,7 @@ or the sites match a specific constraint (i.e Give me the name of sites that sup
 From then on the submit host where `rsv-gwms-tester` runs is just like any other submit host in a HTCondor-Pool.
 
 Behind the scenes the master probes enables the same test jobs for each site it finds on the list obtained above.
-Each job is a probe and while the default configuration ships a "dummy-vanilla-probe" this is meant as a template for each organization to write downs as many probes for what they want to test a site(i.e software installation, access to storage or network setup).
+Each job is a probe and while the default configuration ships a "dummy-vanilla-probe" this is meant as a template for each organization to write downs as many probes for what they want to test a site (i.e software installation, access to storage or network setup).
 
 Installation
 ============

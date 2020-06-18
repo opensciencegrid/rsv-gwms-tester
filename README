@@ -10,7 +10,7 @@ Requirements
 ============
 1. The Virtual Organization has already a working [Glideinwms Frontend](https://glideinwms.fnal.gov/doc.prd/frontend/index.html)
 1. The Virtual Organization creates a set of probes(jobs or capabilities it wants to test out of a site).
-1. A Rhel6/6 machine that can install rsv as root.
+1. A EL[6|7] machine that can install rsv as root.
 1. An Open port to the WAN
 1. A Public IP
 

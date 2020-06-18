@@ -1,5 +1,41 @@
 # rsv-gwms-tester
 
+Use Case
+========
+Rsv-gwms-tester is a package that is meant to do end-to-end regular testing of [GlideinWMS](https://glideinwms.fnal.gov/).
+More specifically it is mean to submit a set of HTCondor Vanila universe jobs to the set of supported grid sites of a Virtual Organization (VO).
+It can be thought of as a [SAM-light](https://twiki.cern.ch/twiki/bin/view/CMSPublic/CompOpsSAMTests) set of grid tests.
+
+Requirements
+============
+1. The Virtual Organization has already a working [Glideinwms Frontend](https://glideinwms.fnal.gov/doc.prd/frontend/index.html)
+1. The Virtual Organization creates a set of probes(jobs or capabilities it wants to test out of a site).
+1. A Rhel6/6 machine that can install rsv as root.
+1. An Open port to the WAN
+1. A Public IP
+
+Architecture
+============
+The architechture of `rsv-gwms-tester` is based on the architechture of RSV. It is meant as a set of probes (jobs)
+that are periodically run using HTCondor-cron.
+Traditionally RSV installations would submit grid tests(HTCondor-C) from a host to the same host HTCondor-CE.
+RSV-VO-GWMS submits a set of Vanilla Jobs that are meant to run at different locations in the Grid.
+
+The basic idea is that a user (A VO Manager) just needs to edit one "master" probe's configuration (org.osg.local-gfactory-querying-local) select the VO it wants to test.
+Then the master probes will enable the actual "test probes" at each site the VO is allowed to run in.
+It does by querying a factory HTCondor collector and filtering the sites based on if they suppport a given organization,
+or the sites match a specific constraint (i.e Give me the name of sites that suport LIGO and VIRGO).
+From then on the submit host where RSV-VO-GWMS is just like any other submit host in a HTCondor-Pool.
+
+Behind the scenes the master probes enables the same test jobs for each site it finds on the list obtained above.
+Each job is a probe and while the default configuration ships a "dummy-vanilla-probe" this is meant as a template for each organization to write downs as many probes for what they want to test a site(i.e software installation, access to storage or network setup).
+
+Installation
+============
+For installation instructions please go [here|https://opensciencegrid.org/docs/monitoring/install-rsv-gwms-tester/].
+
+
+
 Architecure
 ===========
 rsv-gwms-tester is identical to the one of [rvs-vo-gwms](https://github.com/opensciencegrid/rsv-vo-gwms).

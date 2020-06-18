@@ -1,44 +1,18 @@
 # rsv-gwms-tester
-Additional probes and configuration. One probe that activates several vanilla probes per sites.
 
-Requirements:
+Architecure
+===========
+rsv-gwms-tester is identical to the one of [rvs-vo-gwms](https://github.com/opensciencegrid/rsv-vo-gwms).
+Except it submits Condor-C jobs instead of Condor Vanilla jobs. In this regard it acts as a [GlideinWMS Factory](https://glideinwms.fnal.gov/doc.prd/factory/index.html). This way it does not need a GlideinWMS Frontend to work as rsv-vo-gwms does.
 
-1. Valid Host cert
+Requirements
+============
 
+1. An X509 certificate with the VOMS extension of the Virtual Organization (VO).
+1. A RedHat running machine where rsv-gwms-tester can be installed as root
 
-In order to install:
+Installation
+============
 
-1. Install OSG Repos as:
+For installation instructions please go [here|https://opensciencegrid.org/docs/monitoring/install-rsv-gwms-tester/].
 
-https://twiki.grid.iu.edu/bin/view/Documentation/Release3/YumRepositories
-
-2. yum install rsv-gwms-tester
-
-
-Configuration:
-
-1. Create file /etc/condor-cron/config.d/98_location.config with contents:
-
-CONDOR_HOST = your_glidein_pool_central_manager
-# Don't try the IP address macro of condor-cron it defaults to the private IP
-NETWORK_INTERFACE = this_host_ip
-
-2.  Create file /etc/condor-cron/config.d/90_gwms_dns.config
-
-# Comment: central manager your_central_manager_hostname
-# The following DN will map to condor                                                                                                                                            
-GSI_DAEMON_NAME=$(GSI_DAEMON_NAME),your_central_manager_DN
-
-3. Create file /etc/condor-cron/certs/condor_mapfile
-
-Add central manager DN to the list:
-
-like: 
-GSI "^\/DC\=org\/DC\=opensciencegrid\/O\=Open\ Science\ Grid\/OU\=Services\/CN\=osg\-ligo\-1\.t2\.ucsd\.edu$" condor
-
-
-To start:
-
-rsv-control --enable org.osg.local-gfactory-site-querying-local --host host_name
-
-rsv-control --on org.osg.local-gfactory-site-querying-local --host host_name

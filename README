@@ -25,7 +25,7 @@ The basic idea is that a user (A VO Manager) just needs to edit one "master" pro
 Then the master probes will enable the actual "test probes" at each site the VO is allowed to run in.
 It does by querying a factory HTCondor collector and filtering the sites based on if they suppport a given organization,
 or the sites match a specific constraint (i.e Give me the name of sites that suport LIGO and VIRGO).
-From then on the submit host where `rsv-gwms-tester` runs is just like any other submit host in a HTCondor-Pool.
+From then on the submit host where `rsv-gwms-tester` runs is just like any other submit host in a HTCondor pool.
 
 Behind the scenes the master probes enables the same test jobs for each site it finds on the list obtained above.
 Each job is a probe and while the default configuration ships a "dummy-vanilla-probe" this is meant as a template for each organization to write downs as many probes for what they want to test a site (i.e software installation, access to storage or network setup).

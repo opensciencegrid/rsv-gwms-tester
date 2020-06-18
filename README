@@ -21,7 +21,7 @@ that are periodically run using HTCondor-cron.
 Traditionally RSV installations would submit grid tests(HTCondor-C) from a host to the same host HTCondor-CE.
 `rsv-gwms-tester` submits a set of Vanilla Jobs that are meant to run at different locations in the Grid.
 
-The basic idea is that a user (A VO Manager) just needs to edit one "master" probe's configuration (org.osg.local-gfactory-querying-local) select the VO it wants to test.
+The basic idea is that a user (A VO Manager) just needs to edit one "master" probe's configuration (org.osg.local-gfactory-querying-local) and select the VO it wants to test.
 Then the master probes will enable the actual "test probes" at each site the VO is allowed to run in.
 It does by querying a factory HTCondor collector and filtering the sites based on if they suppport a given organization,
 or the sites match a specific constraint (i.e Give me the name of sites that suport LIGO and VIRGO).
